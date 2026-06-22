@@ -17,7 +17,7 @@ Core product:
 - No backend, no account, no external APIs, no analytics, no framework required.
 - Persist everything in browser localStorage.
 - Add optional Supabase sync that can be enabled with a config file. If Supabase is not configured, the app must continue working local-only.
-- Include GitHub Pages deployment and basic PWA support so the app can be opened on mobile and added to the home screen.
+- Include GitHub Pages branch deployment guidance and basic PWA support so the app can be opened on mobile and added to the home screen.
 
 Notes:
 - Notes have id, title, type, tags, body, color, createdAt, updatedAt.
@@ -78,7 +78,8 @@ Supabase sync:
 - On local edits, continue saving to localStorage and queue a cloud sync when signed in.
 
 Mobile/deployment:
-- Include a GitHub Pages workflow that publishes the static app from the repository root.
+- Make the static app publishable directly from the repository root with GitHub Pages branch publishing.
+- Document the required Pages settings: Deploy from a branch, `main`, `/(root)`.
 - Use relative paths such as `./index.html`, `./styles.css`, and `./service-worker.js` so the app works under a project URL like `/note-app/`.
 - Include a `manifest.webmanifest`, an app icon, and a service worker that caches only same-origin app-shell files.
 - Do not cache Supabase API requests in the service worker.
@@ -108,7 +109,6 @@ Recommended file structure:
 - manifest.webmanifest
 - service-worker.js
 - icons/icon.svg
-- .github/workflows/pages.yml
 - README.md
 - PRODUCT_PLAN.md
 

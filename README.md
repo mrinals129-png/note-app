@@ -20,7 +20,7 @@ Daybook Studio is designed for a UX designer who wants one calm workspace for no
 - Markdown export for the selected day and all notes.
 - Browser-only persistence through `localStorage`.
 - Optional Supabase sync with email/password sign-in.
-- GitHub Pages deployment workflow and basic installable PWA support.
+- GitHub Pages branch deployment and basic installable PWA support.
 
 ## Run Locally
 
@@ -40,13 +40,21 @@ You can also serve it with any static server. There is no build step.
 
 ## Mobile Access
 
-The repo includes a GitHub Pages workflow and basic PWA metadata. After GitHub Pages is enabled, the app URL should be:
+The repo is a static app with `index.html` at the repository root, so the simplest GitHub Pages setup is branch publishing.
+
+In GitHub, open Settings > Pages and choose:
+
+```text
+Source: Deploy from a branch
+Branch: main
+Folder: /(root)
+```
+
+Click Save. After GitHub finishes publishing, the app URL should be:
 
 ```text
 https://mrinals129-png.github.io/note-app/
 ```
-
-If the Pages deployment does not start automatically, open the GitHub repo and go to Settings > Pages > Build and deployment > Source, then choose GitHub Actions.
 
 On your phone, open the Pages URL, sign in with the same Supabase account, sync, and use the browser's Add to Home Screen option.
 
