@@ -1,20 +1,37 @@
 const STORE_KEY = "daybook-studio-data-v1";
 const THEME_KEY = "daybook-studio-theme";
 const LAYOUT_KEY = "daybook-studio-layout";
+const SYNC_TABLE = "daybook_documents";
 
 const colors = ["teal", "green", "gold", "coral", "indigo", "lavender"];
 const noteTypes = ["Quick note", "Meeting", "Research", "Critique", "Decision", "Idea"];
 const dayBlocks = ["morning", "midday", "afternoon", "evening"];
+let hasStoredData = Boolean(localStorage.getItem(STORE_KEY));
 let data = loadData();
 let selectedNoteId = data.notes[0]?.id || "";
 let selectedDayKey = dateKey();
 let searchQuery = "";
 let saveTimer = 0;
 let layoutState = loadLayoutState();
+let supabaseClient = null;
+let authUser = null;
+let syncTimer = 0;
+let syncInFlight = false;
+let syncPending = false;
 
 const els = {
   todayLabel: document.querySelector("#todayLabel"),
   saveStatus: document.querySelector("#saveStatus"),
+  syncStatus: document.querySelector("#syncStatus"),
+  syncDot: document.querySelector("#syncDot"),
+  authForm: document.querySelector("#authForm"),
+  authEmail: document.querySelector("#authEmail"),
+  authPassword: document.querySelector("#authPassword"),
+  signUpBtn: document.querySelector("#signUpBtn"),
+  signOutBtn: document.querySelector("#signOutBtn"),
+  syncNowBtn: document.querySelector("#syncNowBtn"),
+  syncActions: document.querySelector("#syncActions"),
+  accountLabel: document.querySelector("#accountLabel"),
   exportBtn: document.querySelector("#exportBtn"),
   themeToggle: document.querySelector("#themeToggle"),
   noteCount: document.querySelector("#noteCount"),
@@ -150,7 +167,8 @@ function normalizeData(value) {
     notes: Array.isArray(safe.notes) ? safe.notes : [],
     tasks: Array.isArray(safe.tasks) ? safe.tasks : [],
     daily: safe.daily && typeof safe.daily === "object" ? safe.daily : {},
-    quickCaptures: Array.isArray(safe.quickCaptures) ? safe.quickCaptures : []
+    quickCaptures: Array.isArray(safe.quickCaptures) ? safe.quickCaptures : [],
+    meta: safe.meta && typeof safe.meta === "object" ? safe.meta : {}
   };
 
   if (normalized.notes.length === 0) {
@@ -199,7 +217,25 @@ function normalizeData(value) {
     };
   });
 
+  normalized.meta = {
+    updatedAt: normalized.meta.updatedAt || latestDataTimestamp(normalized)
+  };
+
   return normalized;
+}
+
+function latestDataTimestamp(value) {
+  const timestamps = [
+    ...(value.notes || []).flatMap((note) => [note.createdAt, note.updatedAt]),
+    ...(value.tasks || []).map((task) => task.createdAt),
+    ...(value.quickCaptures || []).map((capture) => capture.createdAt)
+  ].filter(Boolean);
+
+  if (timestamps.length === 0) {
+    return new Date().toISOString();
+  }
+
+  return timestamps.sort().at(-1);
 }
 
 function seedData() {
@@ -263,17 +299,271 @@ function seedData() {
         },
         reflection: ""
       }
+    },
+    meta: {
+      updatedAt: now
     }
   };
 }
 
-function persist() {
+function persist(options = {}) {
+  const shouldTouch = options.touch !== false;
+  const shouldSync = options.sync !== false;
+  if (shouldTouch) {
+    data.meta = { ...(data.meta || {}), updatedAt: new Date().toISOString() };
+  }
   localStorage.setItem(STORE_KEY, JSON.stringify(data));
+  hasStoredData = true;
   els.saveStatus.textContent = "Saving";
   clearTimeout(saveTimer);
   saveTimer = window.setTimeout(() => {
     els.saveStatus.textContent = "Saved";
   }, 300);
+  if (shouldSync) {
+    queueCloudSync();
+  }
+}
+
+function supabaseConfig() {
+  return window.DAYBOOK_SUPABASE || {};
+}
+
+function isSupabaseConfigured() {
+  const config = supabaseConfig();
+  return Boolean(
+    config.url &&
+      config.anonKey &&
+      !config.anonKey.includes("PASTE_") &&
+      !config.anonKey.includes("YOUR_")
+  );
+}
+
+function renderSyncStatus(message, tone = "idle") {
+  els.syncStatus.textContent = message;
+  els.syncDot.classList.toggle("is-ready", tone === "ready");
+  els.syncDot.classList.toggle("is-busy", tone === "busy");
+  els.syncDot.classList.toggle("is-error", tone === "error");
+}
+
+function renderAuthState(message) {
+  const configured = isSupabaseConfigured();
+  els.authForm.hidden = !configured || Boolean(authUser);
+  els.syncActions.hidden = !configured || !authUser;
+  els.accountLabel.textContent = authUser?.email || "Not signed in";
+
+  if (!configured) {
+    renderSyncStatus("Add Supabase anon key", "error");
+    return;
+  }
+
+  if (message) {
+    return;
+  }
+
+  renderSyncStatus(authUser ? "Signed in" : "Sign in to sync", authUser ? "ready" : "idle");
+}
+
+function queueCloudSync() {
+  if (!supabaseClient || !authUser) {
+    return;
+  }
+
+  renderSyncStatus("Sync queued", "busy");
+  clearTimeout(syncTimer);
+  syncTimer = window.setTimeout(() => {
+    pushToCloud();
+  }, 900);
+}
+
+function replaceDataFromCloud(remoteData, remoteUpdatedAt) {
+  data = normalizeData(remoteData);
+  data.meta = { ...(data.meta || {}), updatedAt: remoteUpdatedAt || new Date().toISOString() };
+  selectedNoteId = data.notes[0]?.id || "";
+  selectedDayKey = selectedDayKey || dateKey();
+  localStorage.setItem(STORE_KEY, JSON.stringify(data));
+  hasStoredData = true;
+  render();
+}
+
+async function pushToCloud(message = "Synced") {
+  if (!supabaseClient || !authUser) {
+    return;
+  }
+
+  if (syncInFlight) {
+    syncPending = true;
+    return;
+  }
+
+  syncInFlight = true;
+  syncPending = false;
+  renderSyncStatus("Syncing", "busy");
+
+  const updatedAt = new Date().toISOString();
+  data.meta = { ...(data.meta || {}), updatedAt };
+  const payloadData = normalizeData(data);
+
+  try {
+    const { data: row, error } = await supabaseClient
+      .from(SYNC_TABLE)
+      .upsert(
+        {
+          user_id: authUser.id,
+          data: payloadData,
+          updated_at: updatedAt
+        },
+        { onConflict: "user_id" }
+      )
+      .select("updated_at")
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    data.meta.updatedAt = row?.updated_at || updatedAt;
+    localStorage.setItem(STORE_KEY, JSON.stringify(data));
+    hasStoredData = true;
+    renderSyncStatus(message, "ready");
+  } catch (error) {
+    renderSyncStatus(error.message || "Sync failed", "error");
+  } finally {
+    syncInFlight = false;
+    if (syncPending) {
+      syncPending = false;
+      queueCloudSync();
+    }
+  }
+}
+
+async function syncFromCloud() {
+  if (!supabaseClient || !authUser) {
+    return;
+  }
+
+  renderSyncStatus("Checking cloud", "busy");
+
+  try {
+    const { data: row, error } = await supabaseClient
+      .from(SYNC_TABLE)
+      .select("data, updated_at")
+      .eq("user_id", authUser.id)
+      .maybeSingle();
+
+    if (error) {
+      throw error;
+    }
+
+    if (!row) {
+      await pushToCloud("Cloud copy created");
+      return;
+    }
+
+    const localUpdatedAt = new Date(data.meta?.updatedAt || 0).getTime();
+    const remoteUpdatedAt = new Date(row.updated_at || 0).getTime();
+
+    if (!hasStoredData || remoteUpdatedAt >= localUpdatedAt) {
+      replaceDataFromCloud(row.data, row.updated_at);
+      renderSyncStatus("Synced from cloud", "ready");
+      return;
+    }
+
+    await pushToCloud("Synced local changes");
+  } catch (error) {
+    renderSyncStatus(error.message || "Cloud check failed", "error");
+  }
+}
+
+async function signIn(event) {
+  event.preventDefault();
+  if (!supabaseClient) {
+    return;
+  }
+
+  renderSyncStatus("Signing in", "busy");
+  const email = els.authEmail.value.trim();
+  const password = els.authPassword.value;
+  const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+  if (error) {
+    renderSyncStatus(error.message, "error");
+  }
+}
+
+async function signUp() {
+  if (!supabaseClient) {
+    return;
+  }
+
+  renderSyncStatus("Creating account", "busy");
+  const email = els.authEmail.value.trim();
+  const password = els.authPassword.value;
+  const { data: authData, error } = await supabaseClient.auth.signUp({ email, password });
+
+  if (error) {
+    renderSyncStatus(error.message, "error");
+    return;
+  }
+
+  if (!authData.session) {
+    renderSyncStatus("Check email to confirm", "ready");
+  }
+}
+
+async function signOut() {
+  if (!supabaseClient) {
+    return;
+  }
+
+  renderSyncStatus("Signing out", "busy");
+  const { error } = await supabaseClient.auth.signOut();
+  if (error) {
+    renderSyncStatus(error.message, "error");
+  }
+}
+
+async function initSupabase() {
+  renderAuthState();
+
+  if (!isSupabaseConfigured()) {
+    return;
+  }
+
+  if (!window.supabase?.createClient) {
+    renderSyncStatus("Supabase library unavailable", "error");
+    return;
+  }
+
+  const config = supabaseConfig();
+  supabaseClient = window.supabase.createClient(config.url, config.anonKey, {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true
+    }
+  });
+
+  const { data: sessionData, error } = await supabaseClient.auth.getSession();
+  if (error) {
+    renderSyncStatus(error.message, "error");
+    return;
+  }
+
+  authUser = sessionData.session?.user || null;
+  renderAuthState();
+  if (authUser) {
+    await syncFromCloud();
+  }
+
+  supabaseClient.auth.onAuthStateChange((_event, session) => {
+    authUser = session?.user || null;
+    renderAuthState();
+    if (authUser) {
+      syncFromCloud();
+    } else {
+      renderSyncStatus("Signed out", "ready");
+    }
+  });
 }
 
 function currentNote() {
@@ -1019,6 +1309,11 @@ function exportMarkdown() {
 }
 
 function bindEvents() {
+  els.authForm.addEventListener("submit", signIn);
+  els.signUpBtn.addEventListener("click", signUp);
+  els.signOutBtn.addEventListener("click", signOut);
+  els.syncNowBtn.addEventListener("click", syncFromCloud);
+
   els.themeToggle.addEventListener("click", () => {
     const nextTheme = document.body.classList.contains("dark") ? "light" : "dark";
     setTheme(nextTheme);
@@ -1212,4 +1507,4 @@ function bindEvents() {
 setTheme(localStorage.getItem(THEME_KEY) || "light");
 bindEvents();
 render();
-persist();
+initSupabase();

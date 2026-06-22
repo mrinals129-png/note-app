@@ -16,6 +16,7 @@ Core product:
 - Responsive stacked layout on mobile.
 - No backend, no account, no external APIs, no analytics, no framework required.
 - Persist everything in browser localStorage.
+- Add optional Supabase sync that can be enabled with a config file. If Supabase is not configured, the app must continue working local-only.
 
 Notes:
 - Notes have id, title, type, tags, body, color, createdAt, updatedAt.
@@ -65,6 +66,16 @@ Export:
 - Add a button to export markdown for the selected day and all notes.
 - Export should include selected day focus, tasks, time blocks, reflection, then notes.
 
+Supabase sync:
+- Include a `supabase-config.js` file with a Supabase URL and anon public key placeholder.
+- Include a `supabase-schema.sql` file.
+- Use one table named `daybook_documents` with one JSON document per authenticated user.
+- Enable Row Level Security so users can only select, insert, update, and delete their own row.
+- The browser app should use only the anon/publishable key, never the service role key.
+- Add email/password sign-in, sign-up, sign-out, sync status, and manual Sync controls.
+- On a new device with no local data, pull the cloud document after login.
+- On local edits, continue saving to localStorage and queue a cloud sync when signed in.
+
 Design:
 - Calm, utilitarian, polished workspace for a UX designer.
 - No marketing hero page.
@@ -85,10 +96,12 @@ Recommended file structure:
 - index.html
 - styles.css
 - app.js
+- supabase-config.js
+- supabase-schema.sql
 - README.md
 - PRODUCT_PLAN.md
 
 Verification:
 - Run a static server locally.
-- Test note create/delete, explicit save, task add/remove/check, date switching, wikilink create/open, task backlinks, export, light/dark theme, and mobile layout.
+- Test note create/delete, explicit save, task add/remove/check, date switching, wikilink create/open, task backlinks, export, local-only fallback when Supabase is not configured, light/dark theme, and mobile layout.
 ```

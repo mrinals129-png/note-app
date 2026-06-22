@@ -76,7 +76,7 @@ button {
   display: flex;
   gap: 16px;
   justify-content: space-between;
-  margin: 0 auto 16px;
+  margin: 0 auto 10px;
   max-width: 1500px;
 }
 
@@ -133,6 +133,65 @@ h2 {
   display: flex;
   gap: 8px;
   justify-content: flex-end;
+}
+
+.sync-bar {
+  align-items: center;
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: auto minmax(280px, 1fr) auto;
+  margin: 0 auto 16px;
+  max-width: 1500px;
+  padding: 10px;
+}
+
+.sync-status-group,
+.sync-actions,
+.auth-form {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+}
+
+.sync-dot {
+  background: var(--muted);
+  border-radius: 50%;
+  height: 9px;
+  width: 9px;
+}
+
+.sync-dot.is-ready {
+  background: var(--green);
+}
+
+.sync-dot.is-busy {
+  background: var(--gold);
+}
+
+.sync-dot.is-error {
+  background: var(--danger);
+}
+
+.auth-form {
+  justify-content: center;
+}
+
+.auth-input {
+  max-width: 210px;
+  min-height: 38px;
+}
+
+.sync-actions {
+  justify-content: flex-end;
+}
+
+.sync-actions[hidden],
+.auth-form[hidden] {
+  display: none;
 }
 
 .workspace {
@@ -811,6 +870,21 @@ h2 {
   .topbar {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .sync-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-form,
+  .sync-actions {
+    align-items: stretch;
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .auth-input {
+    max-width: none;
   }
 
   .topbar-actions {

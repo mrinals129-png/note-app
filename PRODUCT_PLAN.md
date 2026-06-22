@@ -27,6 +27,7 @@ A UX designer who needs one calm workspace for daily notes, critique notes, rese
 3. Plan today with one focus, a small task list, and four time blocks.
 4. Revisit previous days with their own tasks, time blocks, and reflections.
 5. Keep the data local and exportable.
+6. Optionally sync notes and day planning across laptop and phone.
 
 ## V1 Scope
 
@@ -44,6 +45,7 @@ A UX designer who needs one calm workspace for daily notes, critique notes, rese
 - Editor toolbar for bullets, numbered lists, markdown links, and image embeds.
 - Light and dark themes.
 - Markdown export for the selected day and all notes.
+- Optional Supabase sync using one per-user JSON document and Row Level Security.
 
 ## Later Ideas
 
@@ -53,4 +55,4 @@ A UX designer who needs one calm workspace for daily notes, critique notes, rese
 - Import from markdown.
 - Weekly review.
 - Calendar view.
-- Optional sync.
+- Separate entity tables for notes, tasks, captures, and assets if collaboration or advanced querying becomes important.

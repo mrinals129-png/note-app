@@ -23,6 +23,30 @@
         </div>
       </header>
 
+      <section class="sync-bar" aria-label="Account and sync">
+        <div class="sync-status-group">
+          <span class="sync-dot" id="syncDot" aria-hidden="true"></span>
+          <span class="save-status" id="syncStatus" aria-live="polite">Local only</span>
+        </div>
+        <form class="auth-form" id="authForm">
+          <input class="input auth-input" id="authEmail" type="email" autocomplete="email" placeholder="Email" />
+          <input
+            class="input auth-input"
+            id="authPassword"
+            type="password"
+            autocomplete="current-password"
+            placeholder="Password"
+          />
+          <button class="button button-primary" id="signInBtn" type="submit">Sign in</button>
+          <button class="button button-secondary" id="signUpBtn" type="button">Sign up</button>
+        </form>
+        <div class="sync-actions" id="syncActions">
+          <span class="panel-meta" id="accountLabel">Not signed in</span>
+          <button class="button button-secondary" id="syncNowBtn" type="button">Sync</button>
+          <button class="button button-secondary" id="signOutBtn" type="button">Sign out</button>
+        </div>
+      </section>
+
       <main class="workspace" id="workspace">
         <section class="panel notes-panel" aria-label="Notes">
           <div class="panel-heading">
@@ -197,6 +221,8 @@
       </main>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
     <script src="app.js"></script>
   </body>
 </html>
