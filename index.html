@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Daybook Studio</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true"></span>
+          <div>
+            <h1>Daybook Studio</h1>
+            <p id="todayLabel">Today</p>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <span class="save-status" id="saveStatus" aria-live="polite">Saved</span>
+          <button class="button button-secondary" id="exportBtn" type="button">Export</button>
+          <button class="button button-secondary" id="themeToggle" type="button" aria-pressed="false">Dark</button>
+        </div>
+      </header>
+
+      <main class="workspace" id="workspace">
+        <section class="panel notes-panel" aria-label="Notes">
+          <div class="panel-heading">
+            <div>
+              <h2>Notes</h2>
+              <span class="panel-meta" id="noteCount">0 notes</span>
+            </div>
+            <div class="panel-actions">
+              <button class="icon-button" id="collapseNotesBtn" type="button" aria-label="Collapse notes panel">&lt;</button>
+              <button class="button button-primary" id="newNoteBtn" type="button">New</button>
+            </div>
+          </div>
+
+          <div class="panel-body">
+            <form class="quick-capture" id="quickCaptureForm">
+              <div class="quick-capture-heading">
+                <h3>Quick capture</h3>
+                <span class="panel-meta" id="captureCount">0 saved</span>
+              </div>
+              <textarea
+                class="textarea capture-input"
+                id="captureInput"
+                placeholder="Drop a thought here. Decide later."
+              ></textarea>
+              <button class="button button-primary" type="submit">Capture</button>
+              <div class="capture-list" id="captureList"></div>
+            </form>
+
+            <label class="field-label" for="searchInput">Search</label>
+            <input
+              class="input"
+              id="searchInput"
+              type="search"
+              autocomplete="off"
+              placeholder="Project, meeting, insight"
+            />
+
+            <div class="note-list" id="noteList"></div>
+          </div>
+        </section>
+
+        <div class="resize-handle resize-handle-left" data-resize="notes" role="separator" aria-label="Resize notes panel"></div>
+
+        <section class="panel editor-panel" aria-label="Current note">
+          <div class="editor-grid">
+            <label class="field">
+              <span class="field-label">Title</span>
+              <input class="input title-input" id="noteTitle" type="text" />
+            </label>
+
+            <div class="field">
+              <span class="field-label">Category</span>
+              <div class="chip-group" id="noteTypeChips" aria-label="Note category"></div>
+            </div>
+          </div>
+
+          <label class="field">
+            <span class="field-label">Tags</span>
+            <input class="input" id="noteTags" type="text" placeholder="portfolio, research, launch" />
+          </label>
+
+          <div class="color-row" aria-label="Note color" id="colorSwatches"></div>
+
+          <div class="note-link-shelf" aria-label="Note links">
+            <div class="note-link-heading">
+              <span class="field-label">Note links</span>
+              <span class="panel-meta">Insert as [[wikilink]]</span>
+            </div>
+            <div class="note-link-list" id="noteLinkSuggestions"></div>
+          </div>
+
+          <label class="field editor-field">
+            <span class="field-label">Note</span>
+            <div class="editor-toolbar" aria-label="Editor tools">
+              <button class="tool-button" data-command="bullet" type="button">Bullets</button>
+              <button class="tool-button" data-command="number" type="button">Numbers</button>
+              <button class="tool-button" data-command="wikilink" type="button">Wikilink</button>
+              <button class="tool-button" data-command="link" type="button">Link</button>
+              <button class="tool-button" data-command="image" type="button">Image</button>
+            </div>
+            <textarea
+              class="textarea note-body"
+              id="noteBody"
+              spellcheck="true"
+              placeholder="Capture the context, decisions, open questions, and next steps."
+            ></textarea>
+          </label>
+
+          <div class="editor-actions">
+            <span class="panel-meta" id="noteUpdated">Updated now</span>
+            <div class="editor-buttons">
+              <button class="button button-secondary" id="saveNoteBtn" type="button">Save</button>
+              <button class="button button-danger" id="deleteNoteBtn" type="button">Delete</button>
+            </div>
+          </div>
+
+          <div class="wikilink-panel" id="wikilinkPanel" aria-label="Links and backlinks"></div>
+        </section>
+
+        <div class="resize-handle resize-handle-right" data-resize="day" role="separator" aria-label="Resize daily plan panel"></div>
+
+        <aside class="panel day-panel" aria-label="Daily plan">
+          <div class="panel-heading">
+            <div>
+              <h2 id="dayHeading">Today</h2>
+              <span class="panel-meta" id="taskProgress">0 of 0 done</span>
+            </div>
+            <button class="icon-button" id="collapseDayBtn" type="button" aria-label="Collapse daily plan panel">&gt;</button>
+          </div>
+
+          <div class="panel-body">
+            <div class="day-switcher" aria-label="Choose day">
+              <button class="button button-secondary" id="prevDayBtn" type="button">Prev</button>
+              <label class="field day-date-field">
+                <span class="field-label">Day</span>
+                <input class="input" id="dayDateInput" type="date" />
+              </label>
+              <button class="button button-secondary" id="todayDayBtn" type="button">Today</button>
+              <button class="button button-secondary" id="nextDayBtn" type="button">Next</button>
+            </div>
+
+            <label class="field">
+              <span class="field-label">Focus</span>
+              <input class="input" id="focusInput" type="text" placeholder="One outcome worth protecting" />
+            </label>
+
+            <form class="task-form" id="taskForm">
+              <input class="input" id="taskInput" type="text" placeholder="Add a task" />
+              <div class="task-controls">
+                <select class="input" id="taskPeriod" aria-label="Task period">
+                  <option>Morning</option>
+                  <option>Midday</option>
+                  <option>Afternoon</option>
+                  <option>Evening</option>
+                </select>
+                <select class="input" id="taskPriority" aria-label="Task priority">
+                  <option>Medium</option>
+                  <option>High</option>
+                  <option>Low</option>
+                </select>
+                <button class="button button-primary" type="submit">Add</button>
+              </div>
+            </form>
+
+            <div class="task-list" id="taskList"></div>
+
+            <div class="time-blocks" id="timeBlocks">
+              <label class="field">
+                <span class="field-label">Morning</span>
+                <textarea class="textarea block-textarea" data-block="morning"></textarea>
+              </label>
+              <label class="field">
+                <span class="field-label">Midday</span>
+                <textarea class="textarea block-textarea" data-block="midday"></textarea>
+              </label>
+              <label class="field">
+                <span class="field-label">Afternoon</span>
+                <textarea class="textarea block-textarea" data-block="afternoon"></textarea>
+              </label>
+              <label class="field">
+                <span class="field-label">Evening</span>
+                <textarea class="textarea block-textarea" data-block="evening"></textarea>
+              </label>
+            </div>
+
+            <label class="field">
+              <span class="field-label">Reflection</span>
+              <textarea class="textarea reflection-textarea" id="reflectionInput"></textarea>
+            </label>
+          </div>
+        </aside>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
