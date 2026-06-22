@@ -1504,7 +1504,20 @@ function bindEvents() {
   });
 }
 
+function registerServiceWorker() {
+  if (!("serviceWorker" in navigator)) {
+    return;
+  }
+
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js").catch(() => {
+      // The app still works normally if offline caching is unavailable.
+    });
+  });
+}
+
 setTheme(localStorage.getItem(THEME_KEY) || "light");
 bindEvents();
 render();
 initSupabase();
+registerServiceWorker();
