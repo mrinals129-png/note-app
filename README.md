@@ -37,22 +37,22 @@ http://127.0.0.1:4173/index.html
 
 You can also serve it with any static server. There is no build step.
 
-## Supabase Sync Setup
+## Supabase Sync
 
-Your project URL is already configured in `supabase-config.js`:
+This repo is already connected to your Supabase project with the browser-safe publishable key in `supabase-config.js`:
 
 ```text
 https://kcucslwbltzqymvtotwn.supabase.co
 ```
 
-To enable sync:
+The database schema has also been applied to the project. To use sync on a laptop or phone:
 
-1. Open the Supabase SQL Editor for your project.
-2. Run the SQL in `supabase-schema.sql`.
-3. Go to Project Settings > Data API.
-4. Copy the `anon` / publishable public key.
-5. Replace `PASTE_SUPABASE_ANON_PUBLIC_KEY_HERE` in `supabase-config.js`.
-6. Reload the app, sign up or sign in, then use Sync.
+1. Serve the app with a static server.
+2. Open the app URL in the browser.
+3. Sign up or sign in with email/password.
+4. Use Sync to push or pull your daybook data.
+
+If you ever create a fresh Supabase project, run the SQL in `supabase-schema.sql` first, then replace the URL and publishable key in `supabase-config.js`.
 
 Do not paste the service role key into this app. The browser app should only use the anon/publishable key with Row Level Security enabled.
 
@@ -61,7 +61,7 @@ Do not paste the service role key into this app. The browser app should only use
 - `index.html` - app structure
 - `styles.css` - responsive UI and theme styles
 - `app.js` - state, autosave, planner, tasks, wikilinks, backlinks, export
-- `supabase-config.js` - Supabase URL and anon public key placeholder
+- `supabase-config.js` - Supabase URL and browser-safe publishable key
 - `supabase-schema.sql` - database table and Row Level Security policies
 - `PRODUCT_PLAN.md` - product intent and roadmap
 - `AI_REBUILD_PROMPT.md` - prompt/spec for another AI to recreate the app
@@ -75,9 +75,9 @@ daybook-studio-data-v1
 daybook-studio-theme
 ```
 
-By default, no backend, account, sync, analytics, or external services are used.
+Without signing in, the app stays local-only in the browser. No analytics are used.
 
-When Supabase sync is configured, Daybook Studio stores one encrypted-in-transit JSON document per signed-in Supabase user in `public.daybook_documents`. Row Level Security policies restrict each user to their own row.
+When you sign in and sync, Daybook Studio stores one encrypted-in-transit JSON document per signed-in Supabase user in `public.daybook_documents`. Row Level Security policies restrict each user to their own row.
 
 ## Copy To Another Laptop
 
