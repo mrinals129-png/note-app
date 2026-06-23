@@ -74,6 +74,8 @@ Supabase sync:
 - Enable Row Level Security so users can only select, insert, update, and delete their own row.
 - The browser app should use only the anon/publishable key, never the service role key.
 - Add email/password sign-in, sign-up, sign-out, sync status, and manual Sync controls.
+- Pass the current app URL as `emailRedirectTo` during sign-up so email confirmations return to the app instead of Supabase's default Site URL.
+- Show auth redirect errors from the URL hash in the sync status, then clean the hash from the address bar.
 - On a new device with no local data, pull the cloud document after login.
 - On local edits, continue saving to localStorage and queue a cloud sync when signed in.
 

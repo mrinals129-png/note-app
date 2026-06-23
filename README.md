@@ -73,6 +73,15 @@ The database schema has also been applied to the project. To use sync on a lapto
 3. Sign up or sign in with email/password.
 4. Use Sync to push or pull your daybook data.
 
+Supabase Auth URL configuration should use:
+
+```text
+Site URL: https://mrinals129-png.github.io/note-app/
+Redirect URL: https://mrinals129-png.github.io/note-app/**
+Redirect URL: http://127.0.0.1:4173/**
+Redirect URL: http://localhost:4173/**
+```
+
 If you ever create a fresh Supabase project, run the SQL in `supabase-schema.sql` first, then replace the URL and publishable key in `supabase-config.js`.
 
 Do not paste the service role key into this app. The browser app should only use the anon/publishable key with Row Level Security enabled.

@@ -328,6 +328,25 @@ function supabaseConfig() {
   return window.DAYBOOK_SUPABASE || {};
 }
 
+function authRedirectUrl() {
+  const url = new URL(window.location.href);
+  url.search = "";
+  url.hash = "";
+  return url.toString();
+}
+
+function renderAuthRedirectError() {
+  const params = new URLSearchParams(window.location.hash.slice(1));
+  const description = params.get("error_description");
+
+  if (!description) {
+    return;
+  }
+
+  renderSyncStatus(description, "error");
+  window.history.replaceState(null, document.title, `${window.location.pathname}${window.location.search}`);
+}
+
 function isSupabaseConfigured() {
   const config = supabaseConfig();
   return Boolean(
@@ -498,7 +517,13 @@ async function signUp() {
   renderSyncStatus("Creating account", "busy");
   const email = els.authEmail.value.trim();
   const password = els.authPassword.value;
-  const { data: authData, error } = await supabaseClient.auth.signUp({ email, password });
+  const { data: authData, error } = await supabaseClient.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: authRedirectUrl()
+    }
+  });
 
   if (error) {
     renderSyncStatus(error.message, "error");
@@ -542,6 +567,7 @@ async function initSupabase() {
       detectSessionInUrl: true
     }
   });
+  renderAuthRedirectError();
 
   const { data: sessionData, error } = await supabaseClient.auth.getSession();
   if (error) {
