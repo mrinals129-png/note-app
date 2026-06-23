@@ -6,6 +6,7 @@
 - Obsidian points to local files, markdown-oriented writing, search, links, and personal ownership as the bigger long-term direction.
 - Notion points to flexible pages, tasks, databases, and templates, but its setup weight is too much for the first version.
 - GitHub searches for small open-source note apps repeatedly surfaced the same practical v1: localStorage persistence, markdown-ish text areas, a list of notes, search, and simple task planning.
+- Later research into Logseq, Zettlr, SilverBullet, and TriliumNext reinforces a V2 direction: keep capture fast, but make important life/work objects structured and linkable instead of burying them in one long note.
 
 References:
 
@@ -40,6 +41,8 @@ A UX designer who needs one calm workspace for daily notes, critique notes, rese
 - Existing-note link chips that insert `[[wikilinks]]` into the active note.
 - Backlinks from both notes and tasks into the active note.
 - Quick capture inbox for thoughts that can later become notes or tasks.
+- Growth space for short-term goals, long-term goals, and things to learn.
+- Growth items can keep a small note, become today's task, open a linked note, and appear as backlinks when they mention `[[Note title]]`.
 - Resizable and collapsible notes and daily-plan side panels.
 - Chip-based note categories and circular color selection.
 - Editor toolbar for bullets, numbered lists, markdown links, and image embeds.
@@ -50,9 +53,23 @@ A UX designer who needs one calm workspace for daily notes, critique notes, rese
 ## Later Ideas
 
 - Richer markdown rendering and inline image previews.
+- Goal review by week/month with prompts for progress, blockers, and next visible proof.
+- Learning queue with status, sources, practice notes, and links to related projects.
+- Dedicated graph view for notes, tasks, goals, and learning items.
 - Project spaces.
 - Pinning and archive.
 - Import from markdown.
 - Weekly review.
 - Calendar view.
 - Separate entity tables for notes, tasks, captures, and assets if collaboration or advanced querying becomes important.
+
+## V2 Direction
+
+The app should become a calm thinking workspace, not just a notes list. The next layer should help answer:
+
+- What am I trying to build in the next few weeks?
+- What am I trying to become over the next year?
+- What am I learning, and where is the evidence that I am improving?
+- Which notes and tasks are connected to those goals?
+
+The first V2 slice is the Growth section inside the daily panel. Longer term, Growth should become its own view with filters, review cadence, and richer connections to notes and tasks.

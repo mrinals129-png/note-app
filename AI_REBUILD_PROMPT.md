@@ -46,10 +46,19 @@ Daily planner:
 - The task input should be full-width and roomy. Do not squeeze it into a tight row with all controls.
 - Show task progress like "2 of 5 done".
 
+Growth:
+- Add a Growth section for longer thinking.
+- Growth items have id, title, kind, status, note, createdAt, updatedAt.
+- Growth kind options: short, long, learn, rendered as Short term, Long term, Learning.
+- Growth status options: Active, Next, Done.
+- Let the user add short-term goals, long-term goals, and things they want to learn.
+- Each growth item can store a small note, change status, become a task for the selected day, open/create a note with the same title, or be deleted.
+- Growth items must be included in localStorage, Supabase sync, and markdown export.
+
 Quick capture:
 - Add a quick capture area in the notes side panel.
 - It should let the user quickly save a thought without deciding where it belongs.
-- Saved captures can later become either a note or a task.
+- Saved captures can later become a note, a task, or a growth item.
 - Captures can be deleted.
 
 Wikilinks:
@@ -61,11 +70,13 @@ Wikilinks:
 - Show backlinks into the active note from:
   - other notes that link to it
   - tasks that link to it
+  - growth items that link to it
 - Backlinks from tasks should show the task text and task date.
+- Backlinks from growth items should show the growth item title and kind.
 
 Export:
 - Add a button to export markdown for the selected day and all notes.
-- Export should include selected day focus, tasks, time blocks, reflection, then notes.
+- Export should include selected day focus, tasks, time blocks, reflection, growth items, then notes.
 
 Supabase sync:
 - Include a `supabase-config.js` file with a Supabase URL and anon public key placeholder.
@@ -101,6 +112,7 @@ Initial seed data:
   - Portfolio critique notes
   - Research debrief template
 - Include sample UX-oriented tasks and daily blocks so the first run feels understandable.
+- Include sample growth items for one short-term goal and one learning topic.
 
 Recommended file structure:
 - index.html
@@ -116,5 +128,5 @@ Recommended file structure:
 
 Verification:
 - Run a static server locally.
-- Test note create/delete, explicit save, task add/remove/check, date switching, wikilink create/open, task backlinks, export, local-only fallback when Supabase is not configured, light/dark theme, and mobile layout.
+- Test note create/delete, explicit save, task add/remove/check, growth add/status/task/note/delete, date switching, wikilink create/open, task and growth backlinks, export, local-only fallback when Supabase is not configured, light/dark theme, and mobile layout.
 ```

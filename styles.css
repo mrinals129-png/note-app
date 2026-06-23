@@ -300,7 +300,7 @@ h2 {
   color: var(--muted);
   display: block;
   font-size: 0.76rem;
-  font-weight: 700;
+  font-weight: 650;
   letter-spacing: 0.04em;
   line-height: 1.2;
   margin-bottom: 6px;
@@ -434,7 +434,7 @@ h2 {
 .capture-actions {
   display: grid;
   gap: 6px;
-  grid-template-columns: 1fr 1fr 32px;
+  grid-template-columns: 1fr 1fr 1fr 32px;
 }
 
 .note-card {
@@ -847,6 +847,116 @@ h2 {
   min-height: 118px;
 }
 
+.section-heading {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.section-heading h3 {
+  font-size: 0.9rem;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.growth-panel {
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 10px;
+  padding-top: 14px;
+}
+
+.growth-form {
+  display: grid;
+  gap: 8px;
+}
+
+.growth-controls {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 64px;
+}
+
+.growth-list {
+  display: grid;
+  gap: 8px;
+}
+
+.growth-card {
+  background: var(--panel-alt);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+}
+
+.growth-card.is-done {
+  opacity: 0.72;
+}
+
+.growth-card.is-highlighted {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+.growth-card-header {
+  align-items: start;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.growth-title {
+  font-size: 0.9rem;
+  font-weight: 650;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.growth-meta {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.growth-kind {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 650;
+  padding: 2px 7px;
+}
+
+.growth-kind[data-kind="short"] {
+  color: var(--accent);
+}
+
+.growth-kind[data-kind="long"] {
+  color: var(--indigo);
+}
+
+.growth-kind[data-kind="learn"] {
+  color: var(--green);
+}
+
+.growth-note {
+  min-height: 68px;
+}
+
+.growth-card-actions {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: minmax(0, 1fr) auto auto 32px;
+}
+
+.growth-status-select {
+  min-height: 34px;
+  padding: 6px 8px;
+}
+
 @media (max-width: 1180px) {
   .workspace {
     grid-template-columns: minmax(240px, 0.8fr) minmax(360px, 1.2fr);
@@ -910,6 +1020,8 @@ h2 {
   .editor-grid,
   .capture-actions,
   .task-controls,
+  .growth-controls,
+  .growth-card-actions,
   .day-switcher,
   .time-blocks {
     grid-template-columns: 1fr;

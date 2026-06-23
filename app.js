@@ -6,6 +6,12 @@ const SYNC_TABLE = "daybook_documents";
 const colors = ["teal", "green", "gold", "coral", "indigo", "lavender"];
 const noteTypes = ["Quick note", "Meeting", "Research", "Critique", "Decision", "Idea"];
 const dayBlocks = ["morning", "midday", "afternoon", "evening"];
+const growthKinds = {
+  short: "Short term",
+  long: "Long term",
+  learn: "Learning"
+};
+const growthStatuses = ["Active", "Next", "Done"];
 let hasStoredData = Boolean(localStorage.getItem(STORE_KEY));
 let data = loadData();
 let selectedNoteId = data.notes[0]?.id || "";
@@ -70,7 +76,13 @@ const els = {
   taskPriority: document.querySelector("#taskPriority"),
   taskList: document.querySelector("#taskList"),
   timeBlocks: document.querySelector("#timeBlocks"),
-  reflectionInput: document.querySelector("#reflectionInput")
+  reflectionInput: document.querySelector("#reflectionInput"),
+  growthForm: document.querySelector("#growthForm"),
+  growthInput: document.querySelector("#growthInput"),
+  growthKind: document.querySelector("#growthKind"),
+  growthStatus: document.querySelector("#growthStatus"),
+  growthList: document.querySelector("#growthList"),
+  growthCount: document.querySelector("#growthCount")
 };
 
 function createId() {
@@ -168,6 +180,7 @@ function normalizeData(value) {
     tasks: Array.isArray(safe.tasks) ? safe.tasks : [],
     daily: safe.daily && typeof safe.daily === "object" ? safe.daily : {},
     quickCaptures: Array.isArray(safe.quickCaptures) ? safe.quickCaptures : [],
+    growthItems: Array.isArray(safe.growthItems) ? safe.growthItems : [],
     meta: safe.meta && typeof safe.meta === "object" ? safe.meta : {}
   };
 
@@ -202,6 +215,16 @@ function normalizeData(value) {
     createdAt: capture.createdAt || new Date().toISOString()
   })).filter((capture) => capture.text.trim());
 
+  normalized.growthItems = normalized.growthItems.map((item) => ({
+    id: item.id || createId(),
+    title: item.title || "Untitled goal",
+    kind: Object.keys(growthKinds).includes(item.kind) ? item.kind : "short",
+    status: growthStatuses.includes(item.status) ? item.status : "Active",
+    note: item.note || "",
+    createdAt: item.createdAt || new Date().toISOString(),
+    updatedAt: item.updatedAt || item.createdAt || new Date().toISOString()
+  })).filter((item) => item.title.trim());
+
   Object.entries(normalized.daily).forEach(([key, entry]) => {
     const source = entry && typeof entry === "object" ? entry : {};
     const sourceBlocks = source.blocks && typeof source.blocks === "object" ? source.blocks : {};
@@ -228,7 +251,8 @@ function latestDataTimestamp(value) {
   const timestamps = [
     ...(value.notes || []).flatMap((note) => [note.createdAt, note.updatedAt]),
     ...(value.tasks || []).map((task) => task.createdAt),
-    ...(value.quickCaptures || []).map((capture) => capture.createdAt)
+    ...(value.quickCaptures || []).map((capture) => capture.createdAt),
+    ...(value.growthItems || []).flatMap((item) => [item.createdAt, item.updatedAt])
   ].filter(Boolean);
 
   if (timestamps.length === 0) {
@@ -286,6 +310,26 @@ function seedData() {
         done: false,
         date: key,
         createdAt: now
+      }
+    ],
+    growthItems: [
+      {
+        id: createId(),
+        title: "Build a sharper portfolio story",
+        kind: "short",
+        status: "Active",
+        note: "Connect weekly tasks back to [[Portfolio critique notes]].",
+        createdAt: now,
+        updatedAt: now
+      },
+      {
+        id: createId(),
+        title: "Learn stronger research synthesis",
+        kind: "learn",
+        status: "Next",
+        note: "Practice turning raw notes into patterns and design opportunities.",
+        createdAt: now,
+        updatedAt: now
       }
     ],
     daily: {
@@ -822,7 +866,7 @@ function collectBacklinks(note) {
     .filter((candidate) => candidate.id !== note.id)
     .filter((candidate) => extractWikilinks(candidate.body).some((title) => normalizeTitle(title) === targetTitle))
     .map((candidate) => ({
-      id: candidate.id,
+      noteId: candidate.id,
       title: candidate.title,
       source: "Note"
     }));
@@ -830,13 +874,23 @@ function collectBacklinks(note) {
   const taskBacklinks = data.tasks
     .filter((task) => extractWikilinks(task.text).some((title) => normalizeTitle(title) === targetTitle))
     .map((task) => ({
-      id: task.id,
       title: task.text,
       date: task.date,
       source: "Task"
     }));
 
-  return [...noteBacklinks, ...taskBacklinks];
+  const growthBacklinks = data.growthItems
+    .filter((item) => {
+      const itemText = `${item.title}\n${item.note}`;
+      return extractWikilinks(itemText).some((title) => normalizeTitle(title) === targetTitle);
+    })
+    .map((item) => ({
+      growthId: item.id,
+      title: item.title,
+      source: growthKinds[item.kind] || "Growth"
+    }));
+
+  return [...noteBacklinks, ...taskBacklinks, ...growthBacklinks];
 }
 
 function renderWikilinks(note) {
@@ -855,7 +909,7 @@ function renderWikilinks(note) {
   if (links.length === 0 && backlinks.length === 0) {
     const empty = document.createElement("div");
     empty.className = "empty-state";
-    empty.textContent = "No links yet. Type [[Note title]] in notes or tasks.";
+    empty.textContent = "No links yet. Type [[Note title]] in notes, tasks, or growth items.";
     els.wikilinkPanel.append(empty);
     return;
   }
@@ -895,8 +949,9 @@ function renderWikilinks(note) {
       const button = document.createElement("button");
       button.type = "button";
       button.className = "backlink-chip";
-      button.dataset.noteId = backlink.id || "";
+      button.dataset.noteId = backlink.noteId || "";
       button.dataset.day = backlink.date || "";
+      button.dataset.growthId = backlink.growthId || "";
       button.innerHTML = `
         <span>${escapeHtml(backlink.source === "Task" ? backlink.title.replace(/\[\[|\]\]/g, "") : backlink.title)}</span>
         <small>${escapeHtml(backlink.source)}${backlink.date ? ` ${escapeHtml(backlink.date)}` : ""}</small>
@@ -951,6 +1006,11 @@ function openBacklink(button) {
     selectedDayKey = button.dataset.day;
     renderDay();
     els.taskInput.focus();
+    return;
+  }
+
+  if (button.dataset.growthId) {
+    highlightGrowthItem(button.dataset.growthId);
   }
 }
 
@@ -1019,6 +1079,7 @@ function renderQuickCaptures() {
       <div class="capture-actions">
         <button class="button button-secondary" data-action="note" type="button">Note</button>
         <button class="button button-secondary" data-action="task" type="button">Task</button>
+        <button class="button button-secondary" data-action="growth" type="button">Growth</button>
         <button class="icon-button" data-action="delete" type="button" aria-label="Delete capture">x</button>
       </div>
     `;
@@ -1085,6 +1146,139 @@ function captureToTask(capture) {
   renderWikilinks(currentNote());
 }
 
+function createGrowthItem(title, kind = "short", status = "Active", note = "") {
+  const now = new Date().toISOString();
+  return {
+    id: createId(),
+    title,
+    kind: Object.keys(growthKinds).includes(kind) ? kind : "short",
+    status: growthStatuses.includes(status) ? status : "Active",
+    note,
+    createdAt: now,
+    updatedAt: now
+  };
+}
+
+function captureToGrowth(capture) {
+  data.growthItems.unshift(createGrowthItem(capture.text.replace(/\s+/g, " ").trim()));
+  removeQuickCapture(capture.id);
+  persist();
+  renderQuickCaptures();
+  renderGrowth();
+  renderWikilinks(currentNote());
+}
+
+function sortedGrowthItems() {
+  const statusScore = { Active: 0, Next: 1, Done: 2 };
+  return data.growthItems.slice().sort((a, b) => {
+    if (a.status !== b.status) {
+      return statusScore[a.status] - statusScore[b.status];
+    }
+    return b.updatedAt.localeCompare(a.updatedAt);
+  });
+}
+
+function renderGrowth() {
+  const items = sortedGrowthItems();
+  const activeCount = items.filter((item) => item.status !== "Done").length;
+  els.growthCount.textContent = `${activeCount} active`;
+  els.growthList.innerHTML = "";
+
+  if (items.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "empty-state";
+    empty.textContent = "No goals yet.";
+    els.growthList.append(empty);
+    return;
+  }
+
+  items.forEach((item) => {
+    const card = document.createElement("article");
+    card.className = `growth-card${item.status === "Done" ? " is-done" : ""}`;
+    card.dataset.growthId = item.id;
+    card.innerHTML = `
+      <div class="growth-card-header">
+        <div>
+          <div class="growth-title">${renderInlineLinks(item.title)}</div>
+          <div class="growth-meta">
+            <span class="growth-kind" data-kind="${escapeHtml(item.kind)}">${escapeHtml(growthKinds[item.kind])}</span>
+            <span class="panel-meta">${escapeHtml(item.status)}</span>
+          </div>
+        </div>
+      </div>
+      <textarea class="textarea growth-note" placeholder="Why this matters, next proof, or related [[note]]"></textarea>
+      <div class="growth-card-actions">
+        <select class="input growth-status-select" data-action="status" aria-label="Growth status">
+          ${growthStatuses.map((status) => `<option${status === item.status ? " selected" : ""}>${status}</option>`).join("")}
+        </select>
+        <button class="button button-secondary" data-action="open-note" type="button">Note</button>
+        <button class="button button-secondary" data-action="task" type="button">Task</button>
+        <button class="icon-button" data-action="delete" type="button" aria-label="Delete growth item">x</button>
+      </div>
+    `;
+    card.querySelector(".growth-note").value = item.note;
+    els.growthList.append(card);
+  });
+}
+
+function updateGrowthItem(id, patch, shouldRender = false) {
+  const item = data.growthItems.find((entry) => entry.id === id);
+  if (!item) {
+    return;
+  }
+
+  Object.assign(item, patch, { updatedAt: new Date().toISOString() });
+  persist();
+  renderWikilinks(currentNote());
+  if (shouldRender) {
+    renderGrowth();
+  }
+}
+
+function addGrowthItem(event) {
+  event.preventDefault();
+  const title = els.growthInput.value.trim();
+  if (!title) {
+    return;
+  }
+
+  data.growthItems.unshift(createGrowthItem(title, els.growthKind.value, els.growthStatus.value));
+  els.growthInput.value = "";
+  persist();
+  renderGrowth();
+  renderWikilinks(currentNote());
+}
+
+function growthLinkTitle(item) {
+  return item.title.replace(/\[\[|\]\]/g, "").trim() || item.title;
+}
+
+function growthToTask(item) {
+  data.tasks.push({
+    id: createId(),
+    text: `Move [[${growthLinkTitle(item)}]] forward`,
+    period: "Morning",
+    priority: item.kind === "long" ? "Low" : "Medium",
+    done: false,
+    date: selectedDayKey,
+    createdAt: new Date().toISOString()
+  });
+  persist();
+  renderTasks();
+  renderWikilinks(currentNote());
+}
+
+function highlightGrowthItem(id) {
+  const card = [...els.growthList.querySelectorAll(".growth-card")].find((item) => item.dataset.growthId === id);
+  if (!card) {
+    return;
+  }
+
+  card.scrollIntoView({ block: "center", behavior: "smooth" });
+  card.classList.add("is-highlighted");
+  window.setTimeout(() => card.classList.remove("is-highlighted"), 1400);
+}
+
 function renderDay() {
   const day = dayData(selectedDayKey, false);
   const isToday = selectedDayKey === dateKey();
@@ -1106,6 +1300,7 @@ function render() {
   renderNotes();
   renderEditor();
   renderDay();
+  renderGrowth();
 }
 
 function createNote() {
@@ -1307,6 +1502,12 @@ function exportMarkdown() {
     "### Reflection",
     day.reflection || "",
     "",
+    "### Growth",
+    ...sortedGrowthItems().map((item) => {
+      const note = item.note ? ` - ${item.note.replace(/\s+/g, " ").trim()}` : "";
+      return `- [${item.status === "Done" ? "x" : " "}] ${item.title} (${growthKinds[item.kind]}, ${item.status})${note}`;
+    }),
+    "",
     "## Notes",
     ""
   ];
@@ -1383,6 +1584,10 @@ function bindEvents() {
     }
     if (actionButton.dataset.action === "task") {
       captureToTask(capture);
+      return;
+    }
+    if (actionButton.dataset.action === "growth") {
+      captureToGrowth(capture);
       return;
     }
     removeQuickCapture(capture.id);
@@ -1494,6 +1699,59 @@ function bindEvents() {
     const day = dayData();
     day.blocks[event.target.dataset.block] = event.target.value;
     persist();
+  });
+
+  els.growthForm.addEventListener("submit", addGrowthItem);
+  els.growthList.addEventListener("input", (event) => {
+    if (!event.target.classList.contains("growth-note")) {
+      return;
+    }
+
+    const card = event.target.closest(".growth-card");
+    updateGrowthItem(card.dataset.growthId, { note: event.target.value });
+  });
+  els.growthList.addEventListener("change", (event) => {
+    if (event.target.dataset.action !== "status") {
+      return;
+    }
+
+    const card = event.target.closest(".growth-card");
+    updateGrowthItem(card.dataset.growthId, { status: event.target.value }, true);
+  });
+  els.growthList.addEventListener("click", (event) => {
+    const link = event.target.closest(".inline-wikilink");
+    if (link) {
+      openLinkedNote(link.dataset.title);
+      return;
+    }
+
+    const actionButton = event.target.closest("[data-action]");
+    if (!actionButton) {
+      return;
+    }
+
+    const card = actionButton.closest(".growth-card");
+    const item = data.growthItems.find((entry) => entry.id === card.dataset.growthId);
+    if (!item) {
+      return;
+    }
+
+    if (actionButton.dataset.action === "open-note") {
+      openLinkedNote(growthLinkTitle(item));
+      return;
+    }
+
+    if (actionButton.dataset.action === "task") {
+      growthToTask(item);
+      return;
+    }
+
+    if (actionButton.dataset.action === "delete") {
+      data.growthItems = data.growthItems.filter((entry) => entry.id !== item.id);
+      persist();
+      renderGrowth();
+      renderWikilinks(currentNote());
+    }
   });
 
   els.taskForm.addEventListener("submit", addTask);

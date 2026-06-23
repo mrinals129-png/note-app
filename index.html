@@ -220,6 +220,40 @@
               <span class="field-label">Reflection</span>
               <textarea class="textarea reflection-textarea" id="reflectionInput"></textarea>
             </label>
+
+            <section class="growth-panel" aria-label="Goals and learning">
+              <div class="section-heading">
+                <div>
+                  <h3>Growth</h3>
+                  <span class="panel-meta" id="growthCount">0 active</span>
+                </div>
+              </div>
+
+              <form class="growth-form" id="growthForm">
+                <input
+                  class="input"
+                  id="growthInput"
+                  type="text"
+                  autocomplete="off"
+                  placeholder="Goal, learning topic, or longer thought"
+                />
+                <div class="growth-controls">
+                  <select class="input" id="growthKind" aria-label="Growth type">
+                    <option value="short">Short term</option>
+                    <option value="long">Long term</option>
+                    <option value="learn">Learning</option>
+                  </select>
+                  <select class="input" id="growthStatus" aria-label="Growth status">
+                    <option>Active</option>
+                    <option>Next</option>
+                    <option>Done</option>
+                  </select>
+                  <button class="button button-primary" type="submit">Add</button>
+                </div>
+              </form>
+
+              <div class="growth-list" id="growthList"></div>
+            </section>
           </div>
         </aside>
       </main>

@@ -9,6 +9,8 @@ Daybook Studio is designed for a UX designer who wants one calm workspace for no
 - Notes with title, type, tags, color, search, and autosave.
 - Quick capture inbox for thoughts that can become notes or tasks later.
 - Daily planner with focus, dated tasks, morning/midday/afternoon/evening blocks, and reflection.
+- Growth section for short-term goals, long-term goals, and things to learn.
+- Growth items can become today's task, open/create a linked note, and participate in backlinks through `[[wikilinks]]`.
 - Previous day, today, next day, and date picker navigation.
 - `[[wikilinks]]` inside notes and tasks.
 - Note-link chips for inserting `[[wikilinks]]` without typing them manually.
@@ -90,7 +92,7 @@ Do not paste the service role key into this app. The browser app should only use
 
 - `index.html` - app structure
 - `styles.css` - responsive UI and theme styles
-- `app.js` - state, autosave, planner, tasks, wikilinks, backlinks, export
+- `app.js` - state, autosave, planner, tasks, growth items, wikilinks, backlinks, export
 - `supabase-config.js` - Supabase URL and browser-safe publishable key
 - `supabase-schema.sql` - database table and Row Level Security policies
 - `PRODUCT_PLAN.md` - product intent and roadmap
